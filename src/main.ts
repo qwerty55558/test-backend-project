@@ -6,7 +6,6 @@ import { AppModule } from './app.module';
 
 import { ClassValidatorException } from './util/class-validator-exeption';
 import { PrismaClientExceptionFilter } from './util/prisma-client-exception.filter';
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
@@ -40,6 +39,23 @@ async function bootstrap() {
   };
   SwaggerModule.setup(`api`, app, document, options);
 
-  await app.listen(12345);
+  // ✅ 로컬 개발용 (Vercel에서는 실행 안 됨)
+  if (process.env.NODE_ENV !== 'production') {
+    await app.listen(12345);
+    console.log(`Application is running on: http://localhost:12345`);
+  } else {
+    // ✅ Vercel Serverless용
+    await app.init();
+  }
+
+  // ✅ Vercel이 사용할 Express 인스턴스 반환
+  return app.getHttpAdapter().getInstance();
 }
-bootstrap();
+
+// ✅ Vercel Serverless로 export
+export default bootstrap();
+
+// 로컬 개발 시에도 bootstrap 실행
+if (process.env.NODE_ENV !== 'production') {
+  bootstrap();
+}
